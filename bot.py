@@ -201,6 +201,7 @@ def validate_time(message, name, phone, service, date):
     save_booking(message, name, phone, service, date, time)
 
 def save_booking(message, name, phone, service, date, time):
+    print(f"Сохранение записи: {name}, {phone}, {service}, {date}, {time}")  
     active_bookings.discard(message.chat.id)
     datetime_str = f"{date} {time}"
 
