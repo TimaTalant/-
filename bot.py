@@ -270,9 +270,17 @@ def send_reminders():
 
 
 # ==================== ЗАПУСК ====================
+# ==================== ЗАПУСК ====================
 if __name__ == "__main__":
     scheduler = BackgroundScheduler()
     scheduler.add_job(send_reminders, 'cron', hour=10, minute=0)
     scheduler.start()
     print("Бот запущен...")
-    bot.infinity_polling()
+
+    while True:
+        try:
+            bot.infinity_polling()
+        except Exception as e:
+            print(f"Ошибка: {e}")
+            print("Перезапуск через 5 секунд...")
+            time.sleep(5)
