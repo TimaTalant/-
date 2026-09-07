@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from telebot import types
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
+import time
 
 # ==================== ЗАГРУЗКА ТОКЕНА И ADMIN_ID ====================
 load_dotenv()
@@ -33,7 +34,8 @@ def main_menu():
     btn4 = types.KeyboardButton('❓ Вопрос')
     btn5 = types.KeyboardButton('📝 Отзывы')
     btn6 = types.KeyboardButton('💼 Кейсы')
-    keyboard.add(btn1, btn2, btn3, btn4, btn5, btn6)
+    btn7 = types.KeyboardButton('📋 Мои записи')
+    keyboard.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7)
     return keyboard
 
 # ==================== КЛАВИАТУРА С ОТМЕНОЙ ====================
@@ -90,6 +92,7 @@ def quest_command(message):
         reply_markup=cancel_keyboard()
     )
     bot.register_next_step_handler(msg, handle_quest)
+
     
 # ==================== ПРОСМОТР ЗАПИСЕЙ ====================
 @bot.message_handler(commands=['bookings'])
@@ -108,7 +111,23 @@ def bookings_command(message):
     text = "📋 **Последние записи:**\n\n"
     for row in rows:
         text += f"#{row['id']} | {row['name']} | {row['phone']}\n   {row['service']} | {row['date']} {row['time']}\n\n"
-    bot.send_message(message.chat.id, text, parse_mode='Markdown')  
+    bot.send_message(message.chat.id, text, parse_mode='Markdown')
+    
+# ==================== ПРОСМОТР ЗАПИСЕЙ ДЛЯ ПОЛЬЗОВАТЕЛЯ ====================
+def mybookings_command(message):
+    user_id = message.chat.id
+
+    response = supabase.table('bookings').select('*').eq('user_id', user_id).order('id', desc=True).execute()
+    rows = response.data
+
+    if not rows:
+        bot.send_message(message.chat.id, "📭 У вас пока нет записей.")
+        return
+
+    text = "📋 **Ваши записи:**\n\n"
+    for row in rows:
+        text += f"#{row['id']} | {row['name']} | {row['phone']}\n   {row['service']} | {row['date']} {row['time']}\n\n"
+    bot.send_message(message.chat.id, text, parse_mode='Markdown')
 
 # ==================== ОБРАБОТЧИК КНОПОК ====================
 @bot.message_handler(func=lambda message: True)
@@ -141,6 +160,8 @@ def handle_buttons(message):
         bot.register_next_step_handler(msg, get_phone)
     elif message.text == '❌ Отмена':
         cancel(message)
+    elif message.text == '📋 Мои записи':
+        mybookings_command(message)
 
 # ==================== РЕГИСТРАЦИЯ ====================
 def get_phone(message):
