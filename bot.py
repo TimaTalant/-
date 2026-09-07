@@ -268,8 +268,6 @@ def send_reminders():
         except Exception as e:
             print(f"Ошибка отправки {b['user_id']}: {e}")
 
-
-# ==================== ЗАПУСК ====================
 # ==================== ЗАПУСК ====================
 if __name__ == "__main__":
     scheduler = BackgroundScheduler()
