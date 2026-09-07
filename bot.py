@@ -90,6 +90,25 @@ def quest_command(message):
         reply_markup=cancel_keyboard()
     )
     bot.register_next_step_handler(msg, handle_quest)
+    
+# ==================== ПРОСМОТР ЗАПИСЕЙ ====================
+@bot.message_handler(commands=['bookings'])
+def bookings_command(message):
+    if message.chat.id != ADMIN_ID:
+        bot.send_message(message.chat.id, "⛔ Нет доступа.")
+        return
+
+    response = supabase.table('bookings').select('*').order('id', desc=True).limit(20).execute()
+    rows = response.data
+
+    if not rows:
+        bot.send_message(message.chat.id, "📭 Записей пока нет.")
+        return
+
+    text = "📋 **Последние записи:**\n\n"
+    for row in rows:
+        text += f"#{row['id']} | {row['name']} | {row['phone']}\n   {row['service']} | {row['date']} {row['time']}\n\n"
+    bot.send_message(message.chat.id, text, parse_mode='Markdown')  
 
 # ==================== ОБРАБОТЧИК КНОПОК ====================
 @bot.message_handler(func=lambda message: True)
@@ -231,25 +250,6 @@ def handle_quest(message):
     username = message.from_user.username or "нет username"
     bot.send_message(ADMIN_ID, f"📩 Новый вопрос от {user_name} (@{username}):\n\n{user_question}")
     bot.send_message(message.chat.id, "✅ Ваш вопрос отправлен. Мы свяжемся с вами.", reply_markup=main_menu())
-
-# ==================== ПРОСМОТР ЗАПИСЕЙ ====================
-@bot.message_handler(commands=['bookings'])
-def bookings_command(message):
-    if message.chat.id != ADMIN_ID:
-        bot.send_message(message.chat.id, "⛔ Нет доступа.")
-        return
-
-    response = supabase.table('bookings').select('*').order('id', desc=True).limit(20).execute()
-    rows = response.data
-
-    if not rows:
-        bot.send_message(message.chat.id, "📭 Записей пока нет.")
-        return
-
-    text = "📋 **Последние записи:**\n\n"
-    for row in rows:
-        text += f"#{row['id']} | {row['name']} | {row['phone']}\n   {row['service']} | {row['date']} {row['time']}\n\n"
-    bot.send_message(message.chat.id, text, parse_mode='Markdown')  
 
 # ==================== НАПОМИНАНИЯ ====================
 def send_reminders():
